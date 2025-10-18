@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قائمة المهام المتقدمة - Advanced To-Do List</title>
+    
+    <style>
+        /* ========== CSS الأصلي + التأثيرات الجديدة + المهام المتأخرة ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px; 
+            transition: direction 0.3s; 
+            position: relative; 
+        }
+        
+        /* ========== تأثير الألعاب النارية / Fireworks Effect ========== */
+        .fireworks { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
+        .firework { position: absolute; width: 4px; height: 4px; background: #FFD700; border-radius: 50%; animation: explode 1.5s ease-out forwards; }
+        @keyframes explode { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(0) translate(var(--dx), var(--dy)); opacity: 0; } }
+        
+        /* تأثير الإيموجي الحزين / Sad Emoji Effect */
+        .sad-emoji { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 50px; z-index: 1001; animation: sadFloat 2s ease-out forwards; }
+        @keyframes sadFloat { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) translateY(-100px) scale(0.5); } }
+        
+        .container { background: white; max-width: 800px; width: 100%; border-radius: 15px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
+        h1 { color: #4A90E2; font-size: 28px; flex: 1; min-width: 200px; }
+        #translateBtn { background: #9b59b6; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: background 0.3s; font-weight: bold; }
+        #translateBtn:hover { background: #8e44ad; }
+        .input-section { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+        #taskInput { flex: 1; min-width: 200px; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
+        #taskInput:focus { outline: none; border-color: #4A90E2; }
+        #taskTime { padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; min-width: 180px; }
+        #taskTime:focus { outline: none; border-color: #4A90E2; }
+        #addBtn { background: #4A90E2; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.3s, transform 0.1s; font-weight: bold; }
+        #addBtn:hover { background: #357ABD; }
+        #addBtn:active { transform: scale(0.98); }
+        
+        .section-title { color: #4A90E2; font-size: 20px; margin: 25px 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #e0e0e0; }
+        
+        /* ========== المهام المتأخرة - تصميم مميز / Overdue Tasks Styling ========== */
+        #overdueList li { 
+            background: #ffebee !important; /* خلفية حمراء فاتحة */
+            border-left: 4px solid #f44336; /* خط أحمر على اليسار */
+            animation: pulse 2s infinite; /* تأثير نبض */
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+        }
+        #overdueList li .task-text { color: #d32f2f; font-weight: bold; }
+        #overdueList li .task-time { color: #c62828; }
+        
+        #taskList, #completedList, #overdueList { list-style: none; margin-bottom: 20px; }
+        #taskList li, #completedList li, #overdueList li { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            margin-bottom: 10px; 
+            border-radius: 8px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            animation: fadeIn 0.4s ease-in; 
+            transition: transform 0.2s; 
+            gap: 10px; 
+        }
+        #taskList li:hover, #completedList li:hover, #overdueList li:hover { 
+            transform: translateX(-5px); 
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1); 
+        }
+        html[dir="ltr"] #taskList li:hover, html[dir="ltr"] #completedList li:hover, html[dir="ltr"] #overdueList li:hover { 
+            transform: translateX(5px); 
+        }
+        #completedList li { background: #D4EFDF; }
+        #completedList li .task-text { text-decoration: line-through; color: #7f8c8d; }
+        
+        .task-content { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .task-text { color: #333; font-size: 16px; word-break: break-word; }
+        .task-time { font-size: 12px; color: #7f8c8d; display: flex; align-items: center; gap: 5px; }
+        .task-actions { display: flex; gap: 8px; }
+        .complete-btn { background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background 0.3s; font-weight: bold; }
+        .complete-btn:hover { background: #229954; }
+        .delete-btn { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; transition: background 0.3s; font-weight: bold; }
+        .delete-btn:hover { background: #c0392b; }
+        .move-to-overdue-btn { background: #ff9800; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 14px; transition: background 0.3s; font-weight: bold; }
+        .move-to-overdue-btn:hover { background: #f57c00; }
+        .empty-message { text-align: center; color: #999; padding: 30px; font-size: 16px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* ========== Responsive ========== */
+        @media (max-width: 600px) { 
+            .container { padding: 20px; } 
+            h1 { font-size: 22px; } 
+            #taskInput, #addBtn, #taskTime, #translateBtn { font-size: 14px; } 
+            .input-section { flex-direction: column; } 
+            #taskInput, #taskTime, #addBtn { width: 100%; min-width: auto; } 
+            .task-actions { flex-direction: column; gap: 5px; } 
+            .complete-btn, .delete-btn, .move-to-overdue-btn { padding: 6px 10px; font-size: 14px; } 
+            .section-title { font-size: 18px; } 
+            .task-text { font-size: 14px; } 
+        }
+        @media (min-width: 600px) and (max-width: 1024px) { 
+            .container { padding: 35px; max-width: 700px; } 
+            h1 { font-size: 26px; } 
+            .section-title { font-size: 19px; } 
+        }
+        @media (min-width: 1024px) { 
+            .container { max-width: 800px; padding: 40px; } 
+            h1 { font-size: 30px; } 
+            .section-title { font-size: 22px; } 
+            .task-text { font-size: 17px; } 
+        }
+    </style>
+</head>
+<body>
+    <div class="fireworks" id="fireworks"></div>
+    <div class="container">
+        <div class="header">
+            <h1 id="mainTitle">📝 قائمة المهام المتقدمة</h1>
+            <button id="translateBtn">Translate to English</button>
+        </div>
+        <div class="input-section">
+            <input type="text" id="taskInput" placeholder="أضف مهمة جديدة...">
+            <input type="datetime-local" id="taskTime" title="تحديد وقت التذكير">
+            <button id="addBtn">إضافة</button>
+        </div>
+        
+        <!-- ========== القسم الجديد: المهام المتأخرة ========== -->
+        <h3 class="section-title" id="overdueTitle">⚠️ المهام المتأخرة</h3>
+        <ul id="overdueList"></ul>
+        
+        <!-- ========== المهام قيد التنفيذ (غير متأخرة) ========== -->
+        <h3 class="section-title" id="activeTitle">📋 مهام قيد التنفيذ</h3>
+        <ul id="taskList"></ul>
+        
+        <!-- ========== المهام المكتملة ========== -->
+        <h3 class="section-title" id="completedTitle">✅ مهام مكتملة</h3>
+        <ul id="completedList"></ul>
+    </div>
+
+    <script>
+        // ========== المتغيرات الأساسية ==========
+        const taskInput = document.getElementById('taskInput');
+        const taskTime = document.getElementById('taskTime');
+        const addBtn = document.getElementById('addBtn');
+        const taskList = document.getElementById('taskList');
+        const completedList = document.getElementById('completedList');
+        const overdueList = document.getElementById('overdueList');
+        const translateBtn = document.getElementById('translateBtn');
+        const fireworks = document.getElementById('fireworks');
+        const htmlElement = document.documentElement;
+        let currentLang = 'ar';
+        let reminderIntervals = [];
+
+        // ========== عبارات التحفيز ==========
+        const successMessages = ['أحسنت! 🎉', 'ثابر إلى الأمام! 💪', 'عمل رائع! 🌟', 'أنت مذهل! 🔥', 'نجاح آخر! 🏆'];
+        const failureMessages = ['ستعوض في المرة القادمة! 🔄', 'المهم عدم الاستسلام، تابع! 👍', 'لا تستسلم! 😊', 'المحاولة التالية أفضل! 📈', 'تعلم منها وتقدم! 🌱'];
+
+        // ========== قاموس الترجمة المحدث ==========
+        const translations = {
+            ar: { 
+                mainTitle: '📝 قائمة المهام المتقدمة', 
+                translateBtn: 'Translate to English', 
+                taskInputPlaceholder: 'أضف مهمة جديدة...', 
+                taskTimeTitle: 'تحديد وقت التذكير', 
+                addBtn: 'إضافة', 
+                overdueTitle: '⚠️ المهام المتأخرة',
+                activeTitle: '📋 مهام قيد التنفيذ', 
+                completedTitle: '✅ مهام مكتملة', 
+                emptyOverdue: 'لا توجد مهام متأخرة! 👏 ممتاز!', 
+                emptyActive: 'لا توجد مهام قيد التنفيذ. ابدأ الآن! 🎯', 
+                emptyCompleted: 'لا توجد مهام مكتملة بعد! 💪', 
+                alertEmpty: 'الرجاء كتابة مهمة أولاً!', 
+                completeBtn: 'إتمام المهمة', 
+                deleteBtn: 'حذف المهمة', 
+                moveToOverdueBtn: 'نقل إلى متأخر', 
+                confirmDelete: 'هل أنت متأكد من حذف هذه المهمة؟',
+                notificationTitle: '⏰ تذكير بمهمة', 
+                alertReminder: '⏰ تذكير بمهمة:\n',
+                moveConfirm: 'هل تريد نقل المهمة إلى قسم المتأخرة؟'
+            },
+            en: { 
+                mainTitle: '📝 Advanced To-Do List', 
+                translateBtn: 'ترجمة إلى العربية', 
+                taskInputPlaceholder: 'Add a new task...', 
+                taskTimeTitle: 'Set reminder time', 
+                addBtn: 'Add', 
+                overdueTitle: '⚠️ Overdue Tasks',
+                activeTitle: '📋 Active Tasks', 
+                completedTitle: '✅ Completed Tasks', 
+                emptyOverdue: 'No overdue tasks! 👏 Excellent!', 
+                emptyActive: 'No active tasks. Start now! 🎯', 
+                emptyCompleted: 'No completed tasks yet! 💪', 
+                alertEmpty: 'Please write a task first!', 
+                completeBtn: 'Complete task', 
+                deleteBtn: 'Delete task', 
+                moveToOverdueBtn: 'Move to Overdue', 
+                confirmDelete: 'Are you sure you want to delete this task?',
+                notificationTitle: '⏰ Task Reminder', 
+                alertReminder: '⏰ Task Reminder:\n',
+                moveConfirm: 'Do you want to move this task to the overdue section?'
+            }
+        };
+
+        // طلب إذن الإشعارات
+        if ('Notification' in window && Notification.permission === 'default') { 
+            Notification.requestPermission(); 
+        }
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => { 
+            loadLanguagePreference(); 
+            loadTasks(); 
+        });
+        addBtn.addEventListener('click', addTask);
+        taskInput.addEventListener('keypress', function(e) { 
+            if (e.key === 'Enter') addTask(); 
+        });
+        translateBtn.addEventListener('click', toggleLanguage);
+
+        // ========== الدوال الأساسية ==========
+        function toggleLanguage() { 
+            currentLang = currentLang === 'ar' ? 'en' : 'ar'; 
+            htmlElement.setAttribute('lang', currentLang); 
+            htmlElement.setAttribute('dir', currentLang === 'en' ? 'ltr' : 'rtl'); 
+            updateUITexts(); 
+            localStorage.setItem('language', currentLang); 
+        }
+        
+        function updateUITexts() { 
+            const t = translations[currentLang]; 
+            document.getElementById('mainTitle').textContent = t.mainTitle; 
+            translateBtn.textContent = t.translateBtn; 
+            taskInput.placeholder = t.taskInputPlaceholder; 
+            taskTime.title = t.taskTimeTitle; 
+            addBtn.textContent = t.addBtn; 
+            document.getElementById('overdueTitle').textContent = t.overdueTitle;
+            document.getElementById('activeTitle').textContent = t.activeTitle; 
+            document.getElementById('completedTitle').textContent = t.completedTitle; 
+            // تحديث عناوين الأزرار الموجودة
+            document.querySelectorAll('.complete-btn').forEach(btn => btn.title = t.completeBtn);
+            document.querySelectorAll('.delete-btn').forEach(btn => btn.title = t.deleteBtn);
+            document.querySelectorAll('.move-to-overdue-btn').forEach(btn => btn.title = t.moveToOverdueBtn);
+            checkEmptyLists(); 
+        }
+        
+        function loadLanguagePreference() { 
+            const savedLang = localStorage.getItem('language'); 
+            if (savedLang && savedLang !== currentLang) { 
+                currentLang = savedLang;
+                htmlElement.setAttribute('lang', currentLang); 
+                htmlElement.setAttribute('dir', currentLang === 'en' ? 'ltr' : 'rtl');
+                updateUITexts(); 
+            }
+        }
+        
+        function getTasks() { return JSON.parse(localStorage.getItem('tasks')) || []; }
+        function saveTasks(tasks) { localStorage.setItem('tasks', JSON.stringify(tasks)); }
+        
+        function addTask() { 
+            const taskText = taskInput.value.trim(); 
+            const reminderTime = taskTime.value; 
+            if (!taskText) { 
+                alert(translations[currentLang].alertEmpty); 
+                return; 
+            } 
+            const task = { 
+                id: Date.now(), 
+                text: taskText, 
+                completed: false, 
+                reminderTime: reminderTime || null,
+                createdAt: new Date().toISOString()
+            }; 
+            const tasks = getTasks(); 
+            tasks.push(task); 
+            saveTasks(tasks); 
+            renderTasks(); 
+            taskInput.value = ''; 
+            taskTime.value = ''; 
+            taskInput.focus(); 
+            if (task.reminderTime && !task.completed) setupReminder(task); 
+        }
+        
+        // ========== عرض المهام مع الفلترة الجديدة ==========
+        function renderTasks() { 
+            // تنظيف القوائم
+            overdueList.innerHTML = ''; 
+            taskList.innerHTML = ''; 
+            completedList.innerHTML = ''; 
+            
+            const tasks = getTasks(); 
+            const now = new Date();
+            
+            // فلترة المهام المتأخرة
+            const overdueTasks = tasks.filter(t => 
+                !t.completed && 
+                t.reminderTime && 
+                new Date(t.reminderTime) < now
+            ).sort((a, b) => new Date(a.reminderTime) - new Date(b.reminderTime));
+            
+            // المهام قيد التنفيذ (غير متأخرة)
+            const activeTasks = tasks.filter(t => 
+                !t.completed && 
+                (!t.reminderTime || new Date(t.reminderTime) >= now)
+            ).sort((a, b) => {
+                if (!a.reminderTime) return 1;
+                if (!b.reminderTime) return -1;
+                return new Date(a.reminderTime) - new Date(b.reminderTime);
+            });
+            
+            // المهام المكتملة
+            const completedTasks = tasks.filter(t => t.completed)
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // الأحدث أولاً
+            
+            // إنشاء العناصر
+            overdueTasks.forEach(task => createTaskElement(task, overdueList));
+            activeTasks.forEach(task => createTaskElement(task, taskList));
+            completedTasks.forEach(task => createTaskElement(task, completedList));
+            
+            checkEmptyLists(); 
+        }
+        
+        function createTaskElement(task, targetList) { 
+            const li = document.createElement('li'); 
+            li.dataset.id = task.id; 
+            const taskContent = document.createElement('div'); 
+            taskContent.className = 'task-content'; 
+            const span = document.createElement('span'); 
+            span.className = 'task-text'; 
+            span.textContent = task.text; 
+            taskContent.appendChild(span); 
+            
+            if (task.reminderTime) { 
+                const timeSpan = document.createElement('div'); 
+                timeSpan.className = 'task-time'; 
+                const reminderDate = new Date(task.reminderTime);
+                const now = new Date();
+                let timeText = `⏰ ${formatGregorianDate(reminderDate)}`;
+                
+                // إضافة علامة متأخر
+                if (!task.completed && reminderDate < now) {
+                    timeText += ' ⏰⚠️';
+                }
+                
+                timeSpan.innerHTML = timeText;
+                taskContent.appendChild(timeSpan); 
+            } 
+            
+            const taskActions = document.createElement('div'); 
+            taskActions.className = 'task-actions'; 
+            
+            const completeBtn = document.createElement('button'); 
+            completeBtn.className = 'complete-btn'; 
+            completeBtn.textContent = task.completed ? '↩️' : '✔️'; 
+            completeBtn.title = translations[currentLang].completeBtn; 
+            completeBtn.onclick = () => toggleComplete(task.id); 
+            
+            const deleteBtn = document.createElement('button'); 
+            deleteBtn.className = 'delete-btn'; 
+            deleteBtn.textContent = '✕'; 
+            deleteBtn.title = translations[currentLang].deleteBtn; 
+            deleteBtn.onclick = () => { 
+                if (confirm(translations[currentLang].confirmDelete)) { 
+                    if (!task.completed) showFailureMessage(); 
+                    deleteTask(task.id); 
+                } 
+            }; 
+            
+            // زر جديد: نقل إلى متأخر
+            const moveToOverdueBtn = document.createElement('button');
+            moveToOverdueBtn.className = 'move-to-overdue-btn';
+            moveToOverdueBtn.textContent = '⏳';
+            moveToOverdueBtn.title = translations[currentLang].moveToOverdueBtn;
+            moveToOverdueBtn.onclick = () => moveTaskToOverdue(task.id);
+
+            // إضافة الأزرار فقط إذا كانت المهمة في قسم التنفيذ
+            if (targetList.id === 'taskList') {
+                taskActions.appendChild(moveToOverdueBtn);
+            }
+            
+            taskActions.appendChild(completeBtn); 
+            taskActions.appendChild(deleteBtn); 
+            li.appendChild(taskContent); 
+            li.appendChild(taskActions); 
+            targetList.appendChild(li); 
+        }
+        
+        function formatGregorianDate(date) { 
+            return date.toLocaleString('ar-EG', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false
+            }); 
+        }
+        
+        function toggleComplete(id) { 
+            const tasks = getTasks(); 
+            const task = tasks.find(t => t.id === id); 
+            if (task) { 
+                task.completed = !task.completed; 
+                saveTasks(tasks); 
+                showSuccessMessage(); 
+                renderTasks(); 
+                clearReminder(id);
+                if (task.completed) {
+                    // إعادة إعداد التذكير إذا أُعيدت المهمة للتنفيذ
+                    if (task.reminderTime) setupReminder(task);
+                }
+            } 
+        }
+        
+        function deleteTask(id) { 
+            const tasks = getTasks(); 
+            const filteredTasks = tasks.filter(t => t.id !== id); 
+            saveTasks(filteredTasks); 
+            renderTasks(); 
+            clearReminder(id); 
+        }
+        
+        // دالة جديدة: نقل المهمة إلى قسم المتأخرة (معدلة)
+        function moveTaskToOverdue(id) {
+            const tasks = getTasks();
+            const task = tasks.find(t => t.id === id);
+            if (task && !task.completed) {
+                // إضافة أو تحديث reminderTime إلى وقت مضى (دقيقة واحدة مضت)
+                task.reminderTime = task.reminderTime || new Date(Date.now() - 60000).toISOString();
+                // التأكد من أن الوقت في الماضي
+                task.reminderTime = new Date(Date.now() - 60000).toISOString();
+                if (confirm(translations[currentLang].moveConfirm)) {
+                    saveTasks(tasks); // إعادة حفظ لتحديث الواجهة
+                    renderTasks(); // إعادة رسم القوائم
+                    clearReminder(id); // مسح التذكير القديم
+                    showFailureMessage(); // إضافة رسالة تحفيزية
+                }
+            }
+        }
+        
+        // ========== فحص القوائم الفارغة المحدث ==========
+        function checkEmptyLists() { 
+            const t = translations[currentLang]; 
+            
+            if (overdueList.children.length === 0) {
+                overdueList.innerHTML = `<li class="empty-message">${t.emptyOverdue}</li>`;
+            }
+            if (taskList.children.length === 0) {
+                taskList.innerHTML = `<li class="empty-message">${t.emptyActive}</li>`;
+            }
+            if (completedList.children.length === 0) {
+                completedList.innerHTML = `<li class="empty-message">${t.emptyCompleted}</li>`;
+            }
+        }
+        
+        // ========== التحفيزات والتأثيرات ==========
+        function showSuccessMessage() { 
+            const message = successMessages[Math.floor(Math.random() * successMessages.length)]; 
+            alert(`🎉 ${message} 😊`); 
+            createFireworks(); 
+        }
+        
+        function showFailureMessage() { 
+            const message = failureMessages[Math.floor(Math.random() * failureMessages.length)]; 
+            alert(`😔 ${message}`); 
+            createSadEmoji(); 
+        }
+        
+        function createFireworks() { 
+            for (let i = 0; i < 30; i++) { 
+                const firework = document.createElement('div'); 
+                firework.className = 'firework'; 
+                const angle = (Math.PI * 2 * i) / 30; 
+                const distance = 100 + Math.random() * 200; 
+                firework.style.left = '50%'; 
+                firework.style.top = '50%'; 
+                firework.style.setProperty('--dx', `${Math.cos(angle) * distance}px`); 
+                firework.style.setProperty('--dy', `${Math.sin(angle) * distance}px`); 
+                firework.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`; 
+                fireworks.appendChild(firework); 
+                setTimeout(() => firework.remove(), 1500); 
+            } 
+        }
+        
+        function createSadEmoji() { 
+            const emoji = document.createElement('div'); 
+            emoji.className = 'sad-emoji'; 
+            emoji.textContent = '😔💔'; 
+            document.body.appendChild(emoji); 
+            setTimeout(() => emoji.remove(), 2000); 
+        }
+        
+        function setupReminder(task) { 
+            if (task.reminderTime && !task.completed) { 
+                const timeDiff = new Date(task.reminderTime).getTime() - Date.now(); 
+                if (timeDiff > 0) { 
+                    const intervalId = setTimeout(() => { 
+                        if ('Notification' in window && Notification.permission === 'granted') { 
+                            new Notification(translations[currentLang].notificationTitle, { 
+                                body: task.text, 
+                                icon: '🔔',
+                                tag: `task-${task.id}`
+                            }); 
+                        } else { 
+                            alert(translations[currentLang].alertReminder + task.text); 
+                        } 
+                        clearReminder(task.id);
+                    }, timeDiff); 
+                    reminderIntervals.push({ id: task.id, intervalId }); 
+                } 
+            } 
+        }
+        
+        function clearReminder(id) { 
+            const reminderIndex = reminderIntervals.findIndex(r => r.id === id); 
+            if (reminderIndex !== -1) { 
+                clearTimeout(reminderIntervals[reminderIndex].intervalId); 
+                reminderIntervals.splice(reminderIndex, 1); 
+            } 
+        }
+        
+        function loadTasks() { 
+            renderTasks(); 
+            // تنظيف التذكيرات القديمة وإعادة إعداد الجديدة
+            reminderIntervals.forEach(reminder => clearTimeout(reminder.intervalId));
+            reminderIntervals = [];
+            getTasks().forEach(task => { 
+                if (task.reminderTime && !task.completed) {
+                    setupReminder(task);
+                }
+            }); 
+        }
+        
+        // تنظيف التذكيرات عند إغلاق الصفحة
+        window.addEventListener('beforeunload', () => {
+            reminderIntervals.forEach(reminder => clearTimeout(reminder.intervalId));
+        });
+    </script>
+</body>
+</html>

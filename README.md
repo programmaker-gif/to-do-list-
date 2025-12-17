@@ -37,5 +37,3 @@ MIT License – free to use and modify.
 
 ## Author
 Gaafar Mohammd – Self-taught Front-End Developer  
-Contact: [Your Email or LinkedIn]
-
